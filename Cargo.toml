@@ -1,0 +1,27 @@
+[package]
+name = "pwd-gen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+tonic-build = "0.11.0"
+
+[[bin]]
+name = "server"
+path = "src/server/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/client/client.rs"
+
+[dependencies]
+chrono = "0.4.38"
+clap = { version = "4.5.4", features = ["derive", "env"] }
+postgres = "0.19.7"
+prost = "0.12.4"
+prost-types = "0.12.4"
+rand = "0.8.5"
+tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros"] }
+tokio-postgres = "0.7.10"
+tonic = "0.11.0"

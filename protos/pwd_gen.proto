@@ -1,0 +1,17 @@
+syntax ="proto3";
+package pwdgen;
+
+message pwdRequest {
+  string user =1;
+}
+
+message pwdResponse {
+  string user = 1;
+  string pwd = 2;
+  string expiryAt = 3;
+}
+
+
+service pwdGenerator {
+  rpc UpdatePwdValidity(pwdRequest) returns(pwdResponse);
+}
