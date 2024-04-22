@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 
 use crate::gen;
 use crate::pg;
@@ -23,15 +24,25 @@ impl PwdGenerator for Grpcserver {
         &self,
         request: Request<PwdRequest>,
     ) -> Result<Response<PwdResponse>, Status> {
-        println!("Got a request from {:?}", request.remote_addr().take().unwrap());
+        println!(
+            "Got a request from {:?}",
+            request.remote_addr().take().unwrap()
+        );
         let request_message: PwdRequest = request.into_inner();
-        // check user
         let user = request_message.user;
+        // skip admin user
+        if filter_user(&user) {
+            return Err(Status::new(
+                Code::Aborted,
+                format!("action not allowed user:{} is admin user", user),
+            ));
+        }
+        // check user
         let row = pg::validate_user(&self.db_client, &user).await;
         match row {
             Ok(r) => {
-                if r.len()>0{
-                println!("user:{} found",user);
+                if r.len() > 0 {
+                    println!("user:{} found", user);
                 }
             }
             Err(e) => {
@@ -58,13 +69,26 @@ impl PwdGenerator for Grpcserver {
             Some(t) => t,
             None => return Err(Status::new(Code::Internal, "error generating validity")),
         };
-        // connect to pg and update pwd
-        let _ =
-            pg::update_user_validatity(&self.db_client, &user, &pwd, &expire_at.to_string()).await;
-        Ok(Response::new(PwdResponse {
-            user: user.to_owned(),
-            pwd: pwd,
-            expiry_at: expire_at.to_string(),
-        }))
+        // update user validity
+        match pg::update_user_validatity(&self.db_client, &user, &pwd, &expire_at.to_string()).await
+        {
+            Ok(_) => Ok(Response::new(PwdResponse {
+                user: user.to_owned(),
+                pwd: pwd,
+                expiry_at: expire_at.to_string(),
+            })),
+            Err(e) => Err(Status::new(
+                Code::Internal,
+                format!("error:{} updating validity for user:{}", e, &user),
+            )),
+        }
     }
+}
+
+// filter_user checks if incoming user
+// is super/admin user
+fn filter_user(user: &str) -> bool {
+    let mut user_list = HashMap::new();
+    user_list.insert("postgres".to_string(), true);
+    user_list.get(user).is_some()
 }
