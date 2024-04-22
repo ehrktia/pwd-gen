@@ -64,7 +64,7 @@ feel free to raise any issues in github issue
 
 - [x] update bin build approach so client can be shared as pre-built binary
 
-- [ ] filter the super users in server layer to avoid accidental password reset via client
+- [x] filter the super users in server layer to avoid accidental password reset via client
 
 - [x] fix client testing via cli and args 
 
